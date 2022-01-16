@@ -23,7 +23,7 @@ function main ({ csvPath, dbPath, outPath }) {
   const headers = data[0]
   const rows = data.slice(1)
 
-  fs.cpSync(dbPath, outPath)
+  fs.copyFileSync(dbPath, outPath)
   const db = sqlite(outPath)
 
   const errors = []
