@@ -1,6 +1,7 @@
 const sqlite = require('better-sqlite3')
 const parseCSV = require('csv-parse/lib/sync')
 const DU = require('date-format-parse')
+const debug = require('debug')('dkv2')
 const fs = require('fs')
 
 const args = require('minimist')(process.argv.slice(2))
@@ -20,13 +21,16 @@ function main ({ csvPath, dbPath, outPath }) {
   const buf = fs.readFileSync(csvPath)
   const data = parseCSV(buf)
 
-  const headers = data[0]
+  const headers = data[0].map(header => header.trim())
+	// console.log(headers)
+	// process.exit(1)
   const rows = data.slice(1)
 
   fs.cpSync(dbPath, outPath)
   const db = sqlite(outPath)
 
   const errors = []
+  const skipped = []
   let idx = 0
   for (const row of rows) {
     idx += 1
@@ -36,17 +40,34 @@ function main ({ csvPath, dbPath, outPath }) {
         continue
       }
       const data = parseRow(headers, row)
+      if (!data) {
+         console.log('skipping row', idx, row[0])
+	 skipped.push({ idx, row })
+	 continue
+      }
       try {
         const res = insertRow(db, data)
         console.log('Inserted row', idx, res)
-      } catch (err) {
-        console.log('Failed to insert row %s: %s %s', idx, err.message, row[0])
-        errors.push({ idx, error: err, row, data })
+      } catch (error) {
+        console.log('Failed to insert row %s: %s %s', idx, error.message, row[0])
+	console.log(error.error)
+	console.log(error.row.join('   |    '))
+	console.log(error.data)
+        errors.push({ idx, error, row, data })
       }
     } catch (err) {
       console.log('Failed to parse row %s: %s %s', err.message, row[0])
       errors.push({ idx, error: err, row })
     }
+  }
+  for (const error of errors) {
+    debug('Error for row %s: %s\n    %s', error.idx, error.error.message, error.row[0])
+    debug(error.error)
+    debug(error.row.join('   |    '))
+    debug(error.data)
+  }
+  for (const row of skipped) {
+	  console.log('Skipped row %s %s', row.idx, row.row[0])
   }
   for (const error of errors) {
     console.log('Error for row %s: %s\n    %s', error.idx, error.error.message, error.row[0])
@@ -61,6 +82,10 @@ function parseRow (headers, row) {
   let note = ''
   const tel = field('Telefon')
   if (tel) note += 'Telefon: ' + tel + '\n'
+
+  const entry1Date = field('Einzahlung 1 Datum')
+  if (!entry1Date) return null
+  if (!field('Vertrags-Nr')) return null
 
   const creditor = {
     id: null,
@@ -92,18 +117,32 @@ function parseRow (headers, row) {
     Zeitstempel: formatDateStamp(new Date())
   }
 
-  const entry = {
+  const entries = []
+  const entry1 = {
     id: null,
     VertragsId: null,
-    Datum: formatDate(parseDate(field('Geld eingegangen?'))),
+    Datum: formatDate(parseDate(field('Einzahlung 1 Datum'))),
     BuchungsArt: 1,
-    Betrag: contract.Betrag,
+    Betrag: parseNumber(field('Einzahlung 1 Summe')) * 100,
     Zeitstempel: formatDateStamp(new Date())
+  }
+  entries.push(entry1)
+  const entry2Sum = field('Einzahlung 2 Summe')
+  if (entry2Sum) {
+	  const entry2 = {
+	    id: null,
+	    VertragsId: null,
+	    Datum: formatDate(parseDate(field('Einzahlung 2 Datum'))),
+	    BuchungsArt: 1,
+	    Betrag: parseNumber(entry2Sum) * 100,
+	    Zeitstempel: formatDateStamp(new Date())
+	  }
+	  entries.push(entry2)
   }
   return {
     creditor,
     contract,
-    entries: [entry]
+    entries
   }
 }
 
@@ -122,7 +161,10 @@ function insertRow (db, data) {
   }
 
   contract.KreditorId = creditorId
-  stmt = db.prepare('INSERT INTO Vertraege VALUES (@id, @KreditorId, @Kennung, @Anmerkung, @ZSatz, @Betrag, @thesaurierend, @Vertragsdatum, @Kfrist, @AnlagenId, @LaufzeitEnde, @Zeitstempel)')
+  contract.zActive = '1'
+
+  // console.log('insert contract', contract)
+  stmt = db.prepare('INSERT INTO Vertraege VALUES (@id, @KreditorId, @Kennung, @Anmerkung, @ZSatz, @Betrag, @thesaurierend, @Vertragsdatum, @Kfrist, @AnlagenId, @LaufzeitEnde, @Zeitstempel, @zActive)')
   info = stmt.run(contract)
   const contractId = info.lastInsertRowid
 
@@ -158,7 +200,7 @@ function formatDateStamp (date) {
 }
 
 function parseNumber (string) {
-  string = string.replace('.', '').replace(' ', '').replace('€', '')
+  string = string.replace('.', '').replace(' ', '').replace('€', '').replace(',', '.')
   return Number(string)
 }
 
