@@ -1,0 +1,20 @@
+# Name of bank account holder
+# usually in capital letters
+name = "WOHNPROJEKT GMBH"
+
+# IBAN of bank account
+IBAN = "DEXXXXXXXXXXXXXXXXXXXX"
+
+# BIC of bank account (required)
+BIC = "XXXXXXXXXXX"
+
+# Details ("Betreff") line prefix
+# Will be appended with the contract number and name
+details_prefix = "Wohnprojekt GmbH Zins-Auszahlung 2022 Direktkredit Nr "
+
+# Optional list of transactions to skip (not include) in the wire transfer.
+# (Contracts with no IBAN will be skipped automatically)
+# Format: "FirstName LastName"
+skip_names = [
+  "Willgeld Bar",
+]
