@@ -18,7 +18,6 @@ parser.add_argument('-c', '--config', default = "./config.toml", help = "path to
 args = parser.parse_args()
 
 config = toml.load(args.config)
-print(config)
 print(f"Loaded config from {args.config}")
 input_basename = path.splitext(path.basename(args.input))[0] 
 output_filename = args.output or "SEPATransfer-" + input_basename + ".xml"
@@ -47,8 +46,8 @@ with open(args.input, newline="") as csvfile:
         amount = round(amount * 100, 0)
         amount = int(amount)
 
-        # The DKV2 CSV contains three weird bytes before the V in Vorname
-        # They arrive in python as \ufeff
+        # The CSV emitted from DKV2 seems to contain three bytes before the V in Vorname
+        # They arrive in python as \ufeff. In xxd they show as "ef bb bf".
         # TODO: File issue in DKV2 to fix this weirdness
         first_name = row.get("Vorname", row.get("\ufeffVorname", ""))
         if first_name != "":
