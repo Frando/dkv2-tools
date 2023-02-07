@@ -1,6 +1,8 @@
 # CSV to SEPA
 
-Create a SEPA batch wire transfer XML file ("Sammelüberweisung") from a CSV emitted by DKV2. You can import the resulting XML file in your online banking to issue a batch (mass) transfer in one go.
+Create a SEPA batch wire transfer XML file (*Sammelüberweisung*) from the yearly interest report (*Jahreszinsabrechnung*) CSV file emitted by DKV2. 
+
+You can import the resulting XML file in your online banking to issue a batch transfer in one go.
 
 ## Installation
 
