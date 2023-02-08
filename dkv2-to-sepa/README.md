@@ -25,7 +25,7 @@ usage: dkv2-to-sepa [-h] [-c CONFIG] input [output]
   ```
   pip install sepaxml toml
   ```
-* Copy the file [`config.example.py`](config.example.py) to `config.py`, open it in a text editor, and adjust all entries. See the comment in the file for details.
+* Copy the file [`config.example.toml`](config.example.toml) to `config.toml`, open it in a text editor, and adjust all entries. See the comment in the file for details.
 * Open a terminal and navigate to this folder. Then, run this command:
   ```
   ./dkv2-to-sepa.py path/to/Jahreszinsabrechnung-20XX.csv
