@@ -4,10 +4,21 @@ Create a SEPA batch wire transfer XML file (*Sammelüberweisung*) from the yearl
 
 You can import the resulting XML file in your online banking to issue a batch transfer in one go.
 
-## Installation
+## Installation and usage
 
-```
+```sh
+# you need python3 and pip. E.g. on Debian based linux distributions:
+apt get python3 python3-pip
+# then you need two python pip packages that this tool needs:
 pip install sepaxml toml
+# now clone this repo
+git clone https://github.com/Frando/dkv2-tools.git
+# and go the the subfolder
+cd dkv2-to-sepa
+# and copy the example config file
+cp config.example.toml config.toml
+# now edit the config file
+gedit config.toml
 ```
 
 ## Usage
